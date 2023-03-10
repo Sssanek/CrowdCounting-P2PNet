@@ -245,7 +245,7 @@ class P2PNet(nn.Module):
     def generate_points(self, frame: np.array, threshold: float = 0.5, device: str = 'cpu') -> list[Tuple[int, int]]:
         """
         Detect human figures on the frame
-        :param frame: frame with human figures
+        :param frame: frame with human figures. Frame dtype should be dtype=uint8.
         :param threshold: threshold of corrert classification confidence. Refer to P2PNet article for more info.
         :param device: device to load frame to
         :returns: list of points on the frame
