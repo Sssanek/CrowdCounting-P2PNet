@@ -8,22 +8,23 @@ import cv2
 import glob
 import scipy.io as io
 
+
 class SHHA(Dataset):
     def __init__(self, data_root, transform=None, train=False, patch=False, flip=False):
         self.root_path = data_root
-        self.train_lists = "shanghai_tech_part_a_train.list"
-        self.eval_list = "shanghai_tech_part_a_test.list"
+        self.train_lists = "train.list"
+        self.eval_list = "test.list"
         # there may exist multiple list files
-        self.img_list_file = self.train_lists.split(',')
+        self.img_list_file = self.train_lists
         if train:
-            self.img_list_file = self.train_lists.split(',')
+            self.img_list_file = self.train_lists
         else:
-            self.img_list_file = self.eval_list.split(',')
+            self.img_list_file = self.eval_list
 
         self.img_map = {}
         self.img_list = []
         # loads the image/gt pairs
-        for _, train_list in enumerate(self.img_list_file):
+        for _, train_list in enumerate([self.img_list_file]):
             train_list = train_list.strip()
             with open(os.path.join(self.root_path, train_list)) as fin:
                 for line in fin:
@@ -95,7 +96,7 @@ class SHHA(Dataset):
 def load_data(img_gt_path, train):
     img_path, gt_path = img_gt_path
     # load the images
-    img = cv2.imread(img_path)
+    img = cv2.imdecode(np.fromfile(img_path, dtype=np.uint8), cv2.IMREAD_UNCHANGED)
     img = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
     # load ground truth points
     points = []
@@ -106,6 +107,7 @@ def load_data(img_gt_path, train):
             points.append([x, y])
 
     return img, np.array(points)
+
 
 # random crop augumentation
 def random_crop(img, den, num_patch=4):

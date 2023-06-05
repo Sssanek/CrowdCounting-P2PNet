@@ -207,13 +207,14 @@ class P2PNet(nn.Module):
     def __init__(self, backbone, row=2, line=2):
         super().__init__()
         self.backbone = backbone
+        self.backbone.eval()
         self.num_classes = 2
         # the number of all anchor points
         num_anchor_points = row * line
 
         self.regression = RegressionModel(num_features_in=256, num_anchor_points=num_anchor_points)
-        self.classification = ClassificationModel(num_features_in=256, \
-                                                  num_classes=self.num_classes, \
+        self.classification = ClassificationModel(num_features_in=256,
+                                                  num_classes=self.num_classes,
                                                   num_anchor_points=num_anchor_points)
 
         self.anchor_points = AnchorPoints(pyramid_levels=[3, ], row=row, line=line)
@@ -226,7 +227,9 @@ class P2PNet(nn.Module):
 
     def forward(self, samples: NestedTensor):
         # get the backbone features
-        features = self.backbone(samples)
+        self.backbone.eval()
+        with torch.no_grad():
+            features = self.backbone(samples)
         # forward the feature pyramid
         features_fpn = self.fpn([features[1], features[2], features[3]])
 
@@ -239,7 +242,6 @@ class P2PNet(nn.Module):
         output_coord = regression + anchor_points
         output_class = classification
         out = {'pred_logits': output_class, 'pred_points': output_coord}
-
         return out
 
     def generate_points(self, frame: np.array, threshold: float = 0.5, device: str = 'cpu') -> list[Tuple[int, int]]:
@@ -377,8 +379,8 @@ def build(args, training):
     weight_dict = {'loss_ce': 1, 'loss_points': args.point_loss_coef}
     losses = ['labels', 'points']
     matcher = build_matcher_crowd(args)
-    criterion = SetCriterion_Crowd(num_classes, \
-                                   matcher=matcher, weight_dict=weight_dict, \
+    criterion = SetCriterion_Crowd(num_classes,
+                                   matcher=matcher, weight_dict=weight_dict,
                                    eos_coef=args.eos_coef, losses=losses)
 
     return model, criterion
